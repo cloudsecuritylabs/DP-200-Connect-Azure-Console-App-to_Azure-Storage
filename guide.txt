@@ -1,0 +1,138 @@
+# create a resoruce group
+# https://docs.microsoft.com/en-us/cli/azure/group?view=azure-cli-latest
+
+az group delete -n test
+az group create --name test -l eastus
+az group exists --n test
+az group list --query "[?location=='eastus']"
+az group delete -n test
+az group show -n test
+az group update --resource-group test --set tags.CostCenter='{"Dept":"IT","Environment":"Test", "Mode":"Training"}'
+az group wait --created  --resource-group test
+az group wait --deleted --resource-group test
+
+
+az group lock create --lock-type ReadOnly -n lockName -g test
+az group lock list -g test
+az group lock show -n lockName -g test
+az group lock update --name lockName -g MyResourceGroup --notes newNotesHere --lock-type CanNotDelete
+az group lock delete --name lockName -g test
+
+
+
+
+
+# To create a storage account in Azure, 
+1. We need a resource group
+az group create -n teststoregroup -l westus
+az storage account create --name "ab223store11" --resource-group teststoregroup --location westus --sku Standard_LRS
+az group create -n teststoregroup
+
+
+az storage account create --name rr6633556e --resource-group "learn-2d0d25d0-c304-4362-8327-5bc168cde175" --location eastus --sku Standard_LRS 
+
+
+dotnet add package Azure.Storage.Blobs
+
+touch appsettings.json
+az storage account show-connection-string --resource-group rg-group-name --name storageaccountname  --query connectionString
+
+
+
+
+
+//creare a new app
+dotnet new console --name PhotoSharingApp
+cd PhotoSharingApp
+dotnet run
+
+//create a resource group and a storage account
+az group create --name test_RG -l eastus
+az storage account create --name "teststore112" --resource-group test_RG --sku Standard_LRS
+
+//get the storage client library
+dotnet add package Azure.Storage.Blobs
+dotnet run
+
+//Connect storage account
+    Access key
+    REST API endpoint
+    - configure connection strings
+
+// create appsettings.json
+touch appsettings.json
+
+az storage account show-connection-string --resource-group test_RG --name teststore112 --query connectionString
+
+add:
+    {
+        "ConnectionStrings": {
+            "StorageAccount": "<value>"
+        }
+    }
+
+
+// Edit PhotoSharingApp.csproj:
+        <ItemGroup>
+            <None Update="appsettings.json">
+              <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            </None>
+        </ItemGroup>
+
+
+// add package for dotnet JSON parsing
+dotnet add package Microsoft.Extensions.Configuration.Json
+touch appsettings.json
+
+
+//update Project.cs file:
+
+using System;
+    using Microsoft.Extensions.Configuration;
+    using System.IO;
+
+    namespace PhotoSharingApp
+    {
+        class Program
+        {
+            static void Main(string[] args)
+            {
+                var builder = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json");
+
+                var configuration = builder.Build();
+            }
+        }
+    }
+
+
+
+
+// Connect your application to your Azure Storage account
+//we need The Azure Storage client library to provide an object model
+using Azure.Storage.Blobs;
+
+//need a BlobContainerClient object
+
+var connectionString = configuration.GetConnectionString("StorageAccount");
+string containerName = "photos";
+BlobContainerClient container = new BlobContainerClient(connectionString, containerName);
+container.CreateIfNotExists();
+Console.WriteLine("Code completed successfully");
+
+// Uploading an image
+cp /home/abasu/Documents/PoetryArt/Hritpindo.png .
+
+//upload an image
+string blobName = "Hritpindo";
+string fileName = "Hritpindo.png";
+BlobClient blobClient = container.GetBlobClient(blobName);
+blobClient.Upload(fileName, true); //overwrite existing one
+
+//validate everything is working fine
+var blobs = container.GetBlobs();
+foreach (var blob in blobs)
+{
+    Console.WriteLine($"{blob.Name} --> Created On: {blob.Properties.CreatedOn:yyyy-MM-dd HH:mm:ss}  Size: {blob.Properties.ContentLength}");
+}
